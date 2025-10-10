@@ -4,6 +4,7 @@
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ColorPicker?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
@@ -20,38 +21,42 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="900.0" prefWidth="1600.0" style="-fx-background-color: #f5f5f5;"
-            xmlns="http://javafx.com/javafx/21"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.example.collabboard.controller.WhiteboardController">
+<BorderPane prefHeight="900.0" prefWidth="1600.0" style="-fx-background-color: #f5f5f5;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.collabboard.controller.WhiteboardController">
 
     <top>
         <BorderPane style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0; -fx-padding: 12;">
             <left>
                 <HBox alignment="CENTER_LEFT" spacing="15">
-                    <StackPane style="-fx-background-color: #6366f1; -fx-background-radius: 8;" prefHeight="40" prefWidth="40">
-                        <Label text="CB" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14;"/>
-                    </StackPane>
-                    <Label text="CollabBoard" style="-fx-font-size: 18; -fx-font-weight: bold;"/>
-                    <Separator orientation="VERTICAL" prefHeight="30"/>
-                    <HBox fx:id="collaboratorsBox" alignment="CENTER_LEFT" spacing="5" style="-fx-cursor: hand;">
-                        <Label fx:id="collaboratorCountLabel" text="1 collaborator" style="-fx-text-fill: #666; -fx-font-size: 13;"/>
-                    </HBox>
-                    <Button fx:id="addCollaboratorBtn" text="+" onAction="#handleAddCollaborator" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20; -fx-cursor: hand; -fx-font-size: 16; -fx-font-weight: bold;" prefWidth="32" prefHeight="32">
-                        <tooltip><Tooltip text="Add Collaborators" /></tooltip>
-                    </Button>
+                    <children>
+                        <StackPane style="-fx-background-color: #6366f1; -fx-background-radius: 8;" prefHeight="40" prefWidth="40">
+                            <children>
+                                <Label text="CB" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14;"/>
+                            </children>
+                        </StackPane>
+                        <Label text="CollabBoard" style="-fx-font-size: 18; -fx-font-weight: bold;"/>
+                        <Separator orientation="VERTICAL" prefHeight="30"/>
+                        <HBox fx:id="collaboratorsBox" alignment="CENTER_LEFT" spacing="5" style="-fx-cursor: hand;">
+                            <children>
+                                <Label fx:id="collaboratorCountLabel" text="1 collaborator" style="-fx-text-fill: #666; -fx-font-size: 13;"/>
+                            </children>
+                        </HBox>
+                        <Button fx:id="addCollaboratorBtn" text="+" onAction="#handleAddCollaborator" style="-fx-background-color: #f0f0f0; -fx-background-radius: 20; -fx-cursor: hand; -fx-font-size: 16; -fx-font-weight: bold;" prefWidth="32" prefHeight="32">
+                            <tooltip><Tooltip text="Add Collaborators" /></tooltip>
+                        </Button>
+                    </children>
                 </HBox>
             </left>
-
             <right>
                 <HBox alignment="CENTER_RIGHT" spacing="10">
-                    <Label fx:id="roomCodeLabel" text="Room: ..." style="-fx-font-size: 13; -fx-text-fill: #666; -fx-background-color: #f0f0f0; -fx-padding: 6 12; -fx-background-radius: 6;"/>
-                    <Button fx:id="shareButton" text="⬆ Share" onAction="#handleShare" style="-fx-background-color: #6366f1; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 8 16; -fx-font-weight: bold; -fx-cursor: hand;">
-                        <tooltip><Tooltip text="Share Room Info" /></tooltip>
-                    </Button>
-                    <Button fx:id="settingsButton" text="⚙" onAction="#handleSettings" style="-fx-background-color: transparent; -fx-text-fill: #666; -fx-font-size: 18; -fx-cursor: hand; -fx-background-radius: 6;" prefWidth="36" prefHeight="36">
-                        <tooltip><Tooltip text="Settings" /></tooltip>
-                    </Button>
+                    <children>
+                        <Label fx:id="roomCodeLabel" text="Room: ..." style="-fx-font-size: 13; -fx-text-fill: #666; -fx-background-color: #f0f0f0; -fx-padding: 6 12; -fx-background-radius: 6;"/>
+                        <Button fx:id="shareButton" text="⬆ Share" onAction="#handleShare" style="-fx-background-color: #6366f1; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 8 16; -fx-font-weight: bold; -fx-cursor: hand;">
+                            <tooltip><Tooltip text="Share Room Info" /></tooltip>
+                        </Button>
+                        <Button fx:id="settingsButton" text="⚙" onAction="#handleSettings" style="-fx-background-color: transparent; -fx-text-fill: #666; -fx-font-size: 18; -fx-cursor: hand; -fx-background-radius: 6;" prefWidth="36" prefHeight="36">
+                            <tooltip><Tooltip text="Settings" /></tooltip>
+                        </Button>
+                    </children>
                 </HBox>
             </right>
         </BorderPane>
@@ -60,121 +65,155 @@
     <center>
         <BorderPane>
             <left>
-                <VBox style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 1 0 0;" prefWidth="280" spacing="0">
-                    <VBox spacing="10" style="-fx-padding: 15;">
-                        <HBox alignment="CENTER_LEFT">
-                            <Label text="Quick Templates" style="-fx-font-size: 14; -fx-font-weight: bold;"/>
-                            <Region HBox.hgrow="ALWAYS"/>
-                            <Button fx:id="closeTemplatesBtn" text="✕" onAction="#handleCloseTemplates" style="-fx-background-color: transparent; -fx-text-fill: #999; -fx-cursor: hand;"/>
-                        </HBox>
-                        <VBox spacing="10" fx:id="templatesContainer">
+                <VBox style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 1 0 0;" prefWidth="280">
+                    <children>
+                        <VBox spacing="10" style="-fx-padding: 15;">
+                            <children>
+                                <HBox alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label text="Quick Templates" style="-fx-font-size: 14; -fx-font-weight: bold;"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button fx:id="closeTemplatesBtn" text="✕" onAction="#handleCloseTemplates" style="-fx-background-color: transparent; -fx-text-fill: #999; -fx-cursor: hand;"/>
+                                    </children>
+                                </HBox>
+                                <VBox spacing="10" fx:id="templatesContainer" />
+                            </children>
                         </VBox>
-                    </VBox>
-                    <Separator/>
-                    <VBox spacing="10" style="-fx-padding: 15;" VBox.vgrow="ALWAYS">
-                        <HBox alignment="CENTER_LEFT">
-                            <Label text="Recent Activity" style="-fx-font-size: 14; -fx-font-weight: bold;"/>
-                            <Region HBox.hgrow="ALWAYS"/>
-                            <Button fx:id="closeActivityBtn" text="✕" onAction="#handleCloseActivity" style="-fx-background-color: transparent; -fx-text-fill: #999; -fx-cursor: hand;"/>
-                        </HBox>
-                        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
-                            <VBox fx:id="activityList" spacing="12" style="-fx-padding: 5;"/>
-                        </ScrollPane>
-                    </VBox>
+                        <Separator/>
+                        <VBox spacing="10" style="-fx-padding: 15;" VBox.vgrow="ALWAYS">
+                            <children>
+                                <HBox alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label text="Recent Activity" style="-fx-font-size: 14; -fx-font-weight: bold;"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button fx:id="closeActivityBtn" text="✕" onAction="#handleCloseActivity" style="-fx-background-color: transparent; -fx-text-fill: #999; -fx-cursor: hand;"/>
+                                    </children>
+                                </HBox>
+                                <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+                                    <content>
+                                        <VBox fx:id="activityList" spacing="12" style="-fx-padding: 5;"/>
+                                    </content>
+                                </ScrollPane>
+                            </children>
+                        </VBox>
+                    </children>
                 </VBox>
             </left>
 
             <center>
                 <StackPane style="-fx-background-color: #f5f5f5;">
-                    <VBox alignment="TOP_CENTER" StackPane.alignment="TOP_CENTER">
-                        <HBox alignment="CENTER" spacing="8" style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 10 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
-                            <padding><Insets top="15" right="0" bottom="0" left="0"/></padding>
-                            <fx:define><ToggleGroup fx:id="toolGroup"/></fx:define>
-
-                            <ToggleButton fx:id="selectTool" text="↖️" onAction="#selectSelectionTool" toggleGroup="$toolGroup" style="-fx-font-size: 16;" prefWidth="40" prefHeight="40">
-                                <tooltip><Tooltip text="Select Tool" /></tooltip>
-                            </ToggleButton>
-                            <ToggleButton fx:id="handTool" text="✋" onAction="#selectHandTool" toggleGroup="$toolGroup" style="-fx-font-size: 16;" prefWidth="40" prefHeight="40">
-                                <tooltip><Tooltip text="Pan Tool" /></tooltip>
-                            </ToggleButton>
-                            <Separator orientation="VERTICAL" prefHeight="30"/>
-                            <ToggleButton fx:id="lockBoardButton" text="🔒" onAction="#handleLockBoard" visible="false" prefWidth="80" prefHeight="40">
-                                <tooltip><Tooltip text="Lock/Unlock Board (Host Only)" /></tooltip>
-                            </ToggleButton>
-                            <Separator orientation="VERTICAL" prefHeight="30"/>
-                            <ToggleButton fx:id="penTool" text="🖊️" onAction="#selectPenTool" toggleGroup="$toolGroup" selected="true" style="-fx-font-size: 16;" prefWidth="40" prefHeight="40">
-                                <tooltip><Tooltip text="Pen Tool" /></tooltip>
-                            </ToggleButton>
-                            <ToggleButton fx:id="textTool" text="T" onAction="#selectTextTool" toggleGroup="$toolGroup" style="-fx-font-size: 16; -fx-font-weight: bold;" prefWidth="40" prefHeight="40">
-                                <tooltip><Tooltip text="Text Tool" /></tooltip>
-                            </ToggleButton>
-                            <ToggleButton fx:id="noteTool" text="🗒️" onAction="#selectStickyNoteTool" toggleGroup="$toolGroup" style="-fx-font-size: 16;" prefWidth="40" prefHeight="40">
-                                <tooltip><Tooltip text="Sticky Note" /></tooltip>
-                            </ToggleButton>
-                            <ToggleButton fx:id="shapeTool" text="🀰" onAction="#selectRectangleTool" toggleGroup="$toolGroup" style="-fx-font-size: 16;" prefWidth="40" prefHeight="40">
-                                <tooltip><Tooltip text="Shape Tool" /></tooltip>
-                            </ToggleButton>
-                            <Separator orientation="VERTICAL" prefHeight="30"/>
-                            <ColorPicker fx:id="colorPicker" prefWidth="100"/>
-                            <ToggleButton fx:id="eraserTool" text="🧹" onAction="#selectEraserTool" toggleGroup="$toolGroup" style="-fx-font-size: 16;" prefWidth="40" prefHeight="40">
-                                <tooltip><Tooltip text="Eraser" /></tooltip>
-                            </ToggleButton>
-                            <Separator orientation="VERTICAL" prefHeight="30"/>
-                            <Button fx:id="clearBtn" text="🗑" onAction="#handleClearCanvas" style="-fx-padding: 8 12;">
-                                <tooltip><Tooltip text="Clear Entire Canvas" /></tooltip>
-                            </Button>
-                            <Separator orientation="VERTICAL" prefHeight="30"/>
-                            <Button fx:id="undoBtn" text="↶" onAction="#handleUndo" style="-fx-font-size: 18;" prefWidth="40" prefHeight="40">
-                                <tooltip><Tooltip text="Undo" /></tooltip>
-                            </Button>
-                            <Button fx:id="redoBtn" text="↷" onAction="#handleRedo" style="-fx-font-size: 18;" prefWidth="40" prefHeight="40">
-                                <tooltip><Tooltip text="Redo" /></tooltip>
-                            </Button>
-                            <Separator orientation="VERTICAL" prefHeight="30"/>
-                            <Button fx:id="saveBtn" text="Save" onAction="#handleSaveBoard" style="-fx-padding: 8 12;">
-                                <tooltip><Tooltip text="Save Board State" /></tooltip>
-                            </Button>
-                            <Button fx:id="loadBtn" text="📁" onAction="#handleLoadBoard" style="-fx-padding: 8 12;">
-                                <tooltip><Tooltip text="Load Board State" /></tooltip>
-                            </Button>
-                            <Button fx:id="exportBtn" text="⬇" onAction="#handleExportAsImage" style="-fx-padding: 8 12;">
-                                <tooltip><Tooltip text="Export as Image" /></tooltip>
-                            </Button>
-                            <Separator orientation="VERTICAL" prefHeight="30"/>
-                            <HBox alignment="CENTER" spacing="8">
-                                <Label fx:id="zoomLabel" text="100%" />
-                                <Slider fx:id="zoomSlider" min="10" max="200" value="100" prefWidth="100"/>
-                            </HBox>
-                        </HBox>
-                    </VBox>
-                    <AnchorPane fx:id="canvasPane" style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 8, 0, 0, 2);">
-                        <StackPane.margin><Insets top="80" right="20" bottom="20" left="20"/></StackPane.margin>
-                        <Canvas fx:id="canvas" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
-                    </AnchorPane>
+                    <children>
+                        <VBox alignment="TOP_CENTER" StackPane.alignment="TOP_CENTER">
+                            <children>
+                                <HBox alignment="CENTER" spacing="6" style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 8 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
+                                    <!-- ** THIS IS THE FIX ** -->
+                                    <padding><Insets top="12" right="0" bottom="0" left="0"/></padding>
+                                    <children>
+                                        <fx:define><ToggleGroup fx:id="toolGroup"/></fx:define>
+                                        <ToggleButton fx:id="selectTool" text="↖️" onAction="#selectSelectionTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
+                                            <tooltip><Tooltip text="Select Tool" /></tooltip>
+                                        </ToggleButton>
+                                        <ToggleButton fx:id="handTool" text="✋" onAction="#selectHandTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
+                                            <tooltip><Tooltip text="Pan Tool" /></tooltip>
+                                        </ToggleButton>
+                                        <Separator orientation="VERTICAL" prefHeight="25"/>
+                                        <ToggleButton fx:id="lockBoardButton" text="🔒" onAction="#handleLockBoard" visible="false" prefWidth="60" prefHeight="45" style="-fx-font-size: 22;">
+                                            <tooltip><Tooltip text="Lock/Unlock Board (Host Only)" /></tooltip>
+                                        </ToggleButton>
+                                        <Separator orientation="VERTICAL" prefHeight="25"/>
+                                        <ToggleButton fx:id="penTool" text="🖊️" onAction="#selectPenTool" toggleGroup="$toolGroup" selected="true" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
+                                            <tooltip><Tooltip text="Pen Tool" /></tooltip>
+                                        </ToggleButton>
+                                        <ToggleButton fx:id="textTool" text="📝" onAction="#selectTextTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
+                                            <tooltip><Tooltip text="Text Tool" /></tooltip>
+                                        </ToggleButton>
+                                        <ToggleButton fx:id="noteTool" text="🗒️" onAction="#selectStickyNoteTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
+                                            <tooltip><Tooltip text="Sticky Note" /></tooltip>
+                                        </ToggleButton>
+                                        <ToggleButton fx:id="shapeTool" text="⬜" onAction="#selectRectangleTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
+                                            <tooltip><Tooltip text="Shape Tool" /></tooltip>
+                                        </ToggleButton>
+                                        <Separator orientation="VERTICAL" prefHeight="25"/>
+                                        <ColorPicker fx:id="colorPicker" prefWidth="80" prefHeight="45"/>
+                                        <ToggleButton fx:id="eraserTool" text="🧹" onAction="#selectEraserTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
+                                            <tooltip><Tooltip text="Eraser" /></tooltip>
+                                        </ToggleButton>
+                                        <Separator orientation="VERTICAL" prefHeight="25"/>
+                                        <Button fx:id="clearBtn" text="🗑️" onAction="#handleClearCanvas" style="-fx-padding: 8 12; -fx-font-size: 22;" prefHeight="45">
+                                            <tooltip><Tooltip text="Clear Entire Canvas" /></tooltip>
+                                        </Button>
+                                        <Separator orientation="VERTICAL" prefHeight="25"/>
+                                        <Button fx:id="undoBtn" text="↶" onAction="#handleUndo" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
+                                            <tooltip><Tooltip text="Undo" /></tooltip>
+                                        </Button>
+                                        <Button fx:id="redoBtn" text="↷" onAction="#handleRedo" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
+                                            <tooltip><Tooltip text="Redo" /></tooltip>
+                                        </Button>
+                                        <Separator orientation="VERTICAL" prefHeight="25"/>
+                                        <Button fx:id="saveBtn" text="💾" onAction="#handleSaveBoard" style="-fx-padding: 8 12; -fx-font-size: 22;" prefHeight="45">
+                                            <tooltip><Tooltip text="Save Board State" /></tooltip>
+                                        </Button>
+                                        <Button fx:id="loadBtn" text="📁" onAction="#handleLoadBoard" style="-fx-padding: 8 12; -fx-font-size: 22;" prefHeight="45">
+                                            <tooltip><Tooltip text="Load Board State" /></tooltip>
+                                        </Button>
+                                        <Button fx:id="exportBtn" text="⬇️" onAction="#handleExportAsImage" style="-fx-padding: 8 12; -fx-font-size: 22;" prefHeight="45">
+                                            <tooltip><Tooltip text="Export as Image" /></tooltip>
+                                        </Button>
+                                        <Separator orientation="VERTICAL" prefHeight="25"/>
+                                        <HBox alignment="CENTER" spacing="6">
+                                            <children>
+                                                <Label fx:id="zoomLabel" text="100%" style="-fx-font-size: 11;"/>
+                                                <Slider fx:id="zoomSlider" min="10" max="200" value="100" prefWidth="80" prefHeight="35"/>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                        <AnchorPane fx:id="canvasPane" style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 8, 0, 0, 2);">
+                            <!-- ** THIS IS THE FIX ** -->
+                            <StackPane.margin><Insets top="80" right="20" bottom="20" left="20"/></StackPane.margin>
+                            <children>
+                                <Canvas fx:id="canvas" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
+                            </children>
+                        </AnchorPane>
+                    </children>
                 </StackPane>
             </center>
 
             <right>
-                <VBox style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 0 1;" prefWidth="340" spacing="0">
-                    <VBox spacing="10" style="-fx-padding: 15;">
-                        <HBox alignment="CENTER_LEFT">
-                            <Label text="Participants" style="-fx-font-size: 14; -fx-font-weight: bold;"/>
-                            <Region HBox.hgrow="ALWAYS"/>
-                            <Button fx:id="closeParticipantsBtn" text="✕" onAction="#handleCloseParticipants" style="-fx-background-color: transparent; -fx-text-fill: #999; -fx-cursor: hand;"/>
-                        </HBox>
-                        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-border-color: transparent;" prefHeight="200">
-                            <VBox fx:id="participantsList" spacing="10" style="-fx-padding: 5;"/>
-                        </ScrollPane>
-                    </VBox>
-                    <Separator/>
-                    <VBox spacing="10" style="-fx-padding: 15;" VBox.vgrow="ALWAYS">
-                        <Label text="Session Chat" style="-fx-font-size: 14; -fx-font-weight: bold;"/>
-                        <ListView fx:id="chatListView" VBox.vgrow="ALWAYS"/>
-                        <HBox spacing="8">
-                            <TextField fx:id="chatTextField" promptText="Type a message..." style="-fx-background-radius: 20; -fx-border-radius: 20;" HBox.hgrow="ALWAYS" onAction="#handleSendChatMessage"/>
-                            <Button fx:id="sendChatButton" text="➤" onAction="#handleSendChatMessage" style="-fx-background-color: #6366f1; -fx-text-fill: white; -fx-background-radius: 20;" prefWidth="40" prefHeight="40"/>
-                        </HBox>
-                    </VBox>
+                <VBox style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 0 1;" prefWidth="340">
+                    <children>
+                        <VBox spacing="10" style="-fx-padding: 15;">
+                            <children>
+                                <HBox alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label text="Participants" style="-fx-font-size: 14; -fx-font-weight: bold;"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button fx:id="closeParticipantsBtn" text="✕" onAction="#handleCloseParticipants" style="-fx-background-color: transparent; -fx-text-fill: #999; -fx-cursor: hand;"/>
+                                    </children>
+                                </HBox>
+                                <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-border-color: transparent;" prefHeight="200">
+                                    <content>
+                                        <VBox fx:id="participantsList" spacing="10" style="-fx-padding: 5;"/>
+                                    </content>
+                                </ScrollPane>
+                            </children>
+                        </VBox>
+                        <Separator/>
+                        <VBox spacing="10" style="-fx-padding: 15;" VBox.vgrow="ALWAYS">
+                           <children>
+                            <Label text="Session Chat" style="-fx-font-size: 14; -fx-font-weight: bold;"/>
+                            <ListView fx:id="chatListView" prefHeight="150"/>
+                            <HBox spacing="8">
+                               <children>
+                                <TextField fx:id="chatTextField" promptText="Type a message..." style="-fx-background-radius: 20; -fx-border-radius: 20;" HBox.hgrow="ALWAYS" onAction="#handleSendChatMessage"/>
+                                <Button fx:id="sendChatButton" text="Send" onAction="#handleSendChatMessage" style="-fx-background-color: #6366f1; -fx-text-fill: white; -fx-background-radius: 6; -fx-font-size: 12; -fx-font-weight: bold;" prefWidth="60" prefHeight="40"/>
+                               </children>
+                            </HBox>
+                           </children>
+                        </VBox>
+                    </children>
                 </VBox>
             </right>
         </BorderPane>
@@ -182,7 +221,10 @@
 
     <bottom>
         <HBox alignment="CENTER_RIGHT" style="-fx-padding: 10; -fx-background-color: transparent;">
-            <Button fx:id="exitRoomBtn" text="🚪 Exit Room" onAction="#handleExitRoom" style="-fx-background-color: #f44336; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 10 20; -fx-font-weight: bold; -fx-cursor: hand;"/>
+            <children>
+                <Button fx:id="exitRoomBtn" text="Exit Room" onAction="#handleExitRoom" style="-fx-background-color: #f44336; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 10 20; -fx-font-weight: bold; -fx-cursor: hand;"/>
+            </children>
         </HBox>
     </bottom>
 </BorderPane>
+

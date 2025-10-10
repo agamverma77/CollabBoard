@@ -1,6 +1,7 @@
 package com.example.collabboard.controller;
 
 import com.example.collabboard.service.CollaborationService;
+import com.example.collabboard.service.ScreenCaptureService;
 import com.example.collabboard.service.SessionManager;
 import com.example.collabboard.util.SceneManager;
 import javafx.application.Platform;
@@ -14,6 +15,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ColorPicker;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
@@ -29,10 +31,14 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Scale;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
+import javafx.geometry.Rectangle2D;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -64,6 +70,12 @@ public class WhiteboardController {
     private double currentZoom = 1.0;
     private Scale scaleTransform;
     private boolean isBoardLocked = false;
+    
+    // Screen sharing state
+    private boolean isScreenSharing = false;
+    private String currentUserId;
+    private java.util.Map<String, ImageView> participantScreens = new java.util.concurrent.ConcurrentHashMap<>();
+    private java.util.Map<String, String> participantNames = new java.util.concurrent.ConcurrentHashMap<>();
 
     // Canvas and core elements
     @FXML private AnchorPane canvasPane;
@@ -136,20 +148,34 @@ public class WhiteboardController {
 
     // Bottom
     @FXML private Button exitRoomBtn;
+    
+    // Screen Sharing UI Elements
+    @FXML private Button startSharingButton;
+    @FXML private Button stopSharingButton;
+    @FXML private Button selectAreaButton;
+    @FXML private ComboBox<String> qualityComboBox;
+    @FXML private ComboBox<String> fpsComboBox;
+    @FXML private ScrollPane sharedScreensScrollPane;
+    @FXML private VBox sharedScreensContainer;
+    @FXML private Label sharingStatusLabel;
 
     private final CollaborationService collaborationService;
+    private final ScreenCaptureService screenCaptureService;
     private final SessionManager sessionManager;
     private final ApplicationContext applicationContext;
 
-    public WhiteboardController(CollaborationService collaborationService, SessionManager sessionManager, ApplicationContext applicationContext) {
+    public WhiteboardController(CollaborationService collaborationService, ScreenCaptureService screenCaptureService, SessionManager sessionManager, ApplicationContext applicationContext) {
         this.collaborationService = collaborationService;
+        this.screenCaptureService = screenCaptureService;
         this.sessionManager = sessionManager;
         this.applicationContext = applicationContext;
     }
     public void initData(String roomCode) {
         Platform.runLater(() -> {
-            String labelPrefix = collaborationService.isHost() ? "Room IP (Host): " : "Room: ";
+            String labelPrefix = collaborationService.isHost() ? "Host IP: " : "Room: ";
             roomCodeLabel.setText(labelPrefix + roomCode);
+            // Make sure the label is visible and properly styled
+            roomCodeLabel.setStyle("-fx-font-size: 12; -fx-text-fill: #333; -fx-background-color: #e8f4fd; -fx-padding: 8 12; -fx-background-radius: 6; -fx-border-color: #2196f3; -fx-border-width: 1; -fx-border-radius: 6;");
         });
     }
 
@@ -172,14 +198,19 @@ public class WhiteboardController {
         // Initialize room info for all
         String roomIdentifier = collaborationService.getCurrentRoomIdentifier();
         if (roomIdentifier != null) {
-            String labelPrefix = collaborationService.isHost() ? "Room: " : "Room: ";
+            String labelPrefix = collaborationService.isHost() ? "Host IP: " : "Room: ";
             roomCodeLabel.setText(labelPrefix + roomIdentifier);
+            // Ensure the label is visible and properly styled
+            roomCodeLabel.setStyle("-fx-font-size: 12; -fx-text-fill: #333; -fx-background-color: #e8f4fd; -fx-padding: 8 12; -fx-background-radius: 6; -fx-border-color: #2196f3; -fx-border-width: 1; -fx-border-radius: 6;");
         }
 
         // Initialize collaboration and UI
         collaborationService.setOnDataReceived(this::parseData);
         setupCanvasEventHandlers();
         initializeUIComponents();
+        
+        // Initialize screen sharing
+        initializeScreenSharing();
 
         if (collaborationService.isHost()) {
             lockBoardButton.setVisible(true); // Only the host can see the lock button
@@ -191,6 +222,15 @@ public class WhiteboardController {
         Tooltip.install(eraserTool, new Tooltip("Eraser"));
         Tooltip.install(undoBtn, new Tooltip("Undo"));
         Tooltip.install(redoBtn, new Tooltip("Redo"));
+        
+        // Apply screen size constraints to ensure proper sizing
+        Platform.runLater(() -> {
+            applyScreenSizeConstraints();
+            optimizeCanvasSize();
+            
+            // Add listener for screen size changes
+            setupScreenSizeListener();
+        });
     }
 
     // --- FXML ACTION HANDLERS ---
@@ -303,7 +343,13 @@ public class WhiteboardController {
 
     @FXML
     private void handleExitRoom(ActionEvent event) throws IOException {
+        // Clean up screen sharing resources
+        cleanupScreenSharing();
+        
+        // Stop collaboration service
         collaborationService.stop();
+        
+        // Switch to dashboard
         SceneManager.switchScene(event, "DashboardView.fxml", "CollabBoard - Dashboard", applicationContext);
     }
 
@@ -348,10 +394,10 @@ public class WhiteboardController {
     private void handleLockBoard(ActionEvent event) {
         if (lockBoardButton.isSelected()) {
             collaborationService.send("LOCK_BOARD");
-            lockBoardButton.setText("🔒 Unlock");
+            lockBoardButton.setText("🔓");
         } else {
             collaborationService.send("UNLOCK_BOARD");
-            lockBoardButton.setText("🔒 Lock");
+            lockBoardButton.setText("🔒");
         }
     }
 
@@ -626,7 +672,7 @@ public class WhiteboardController {
                     isBoardLocked = true;
                     if (lockBoardButton.isVisible()) { // If host, update button state
                         lockBoardButton.setSelected(true);
-                        lockBoardButton.setText("🔒 Unlock");
+                        lockBoardButton.setText("🔓");
                     }
                     return;
                 }
@@ -634,7 +680,7 @@ public class WhiteboardController {
                     isBoardLocked = false;
                     if (lockBoardButton.isVisible()) {
                         lockBoardButton.setSelected(false);
-                        lockBoardButton.setText("🔒 Lock");
+                        lockBoardButton.setText("🔒");
                     }
                     return;
                 }
@@ -666,6 +712,24 @@ public class WhiteboardController {
                         chatListView.scrollTo(chatListView.getItems().size() - 1);
                         break;
                 }
+                
+                // Handle screen sharing messages
+                if (data.startsWith("SCREEN_SHARE:")) {
+                    handleScreenshotData(data);
+                } else if (data.startsWith("SCREEN_SHARE_STATUS:")) {
+                    handleScreenSharingStatus(data);
+                } else if (data.startsWith("USER_LIST:")) {
+                    // Update participant names for screen sharing
+                    String userList = data.substring("USER_LIST:".length());
+                    String[] users = userList.split(",");
+                    participantNames.clear();
+                    for (String user : users) {
+                        if (!user.isEmpty()) {
+                            participantNames.put(user, user);
+                        }
+                    }
+                }
+                
             } catch (Exception e) {
                 System.err.println("Could not parse incoming data: " + data);
             }
@@ -832,6 +896,378 @@ public class WhiteboardController {
             }
         } catch (Exception e) {
             System.err.println("Error drawing sticky note: " + content);
+        }
+    }
+    
+    // ==================== SCREEN SHARING METHODS ====================
+    
+    /**
+     * Initialize screen sharing UI components and settings.
+     */
+    private void initializeScreenSharing() {
+        // Initialize combo boxes
+        if (qualityComboBox != null) {
+            qualityComboBox.getItems().addAll("Low (480p)", "Medium (720p)", "High (1080p)", "Ultra (4K)");
+            qualityComboBox.setValue("Medium (720p)");
+        }
+        
+        if (fpsComboBox != null) {
+            fpsComboBox.getItems().addAll("5 FPS", "10 FPS", "15 FPS", "30 FPS");
+            fpsComboBox.setValue("10 FPS");
+        }
+        
+        // Set initial button states
+        updateScreenSharingButtonStates();
+        
+        // Set current user ID
+        if (sessionManager.getCurrentUser() != null) {
+            currentUserId = sessionManager.getCurrentUser().getUsername();
+        }
+        
+        // Initialize status label
+        if (sharingStatusLabel != null) {
+            sharingStatusLabel.setText("Ready to share screen");
+        }
+    }
+    
+    /**
+     * Handle start screen sharing button click.
+     */
+    @FXML
+    private void handleStartScreenSharing() {
+        if (isScreenSharing) {
+            return;
+        }
+        
+        try {
+            // Get capture settings
+            int intervalMs = getFpsInterval();
+            
+            // Start capturing with callback
+            screenCaptureService.startCapturing(intervalMs, this::sendScreenshot);
+            
+            isScreenSharing = true;
+            updateScreenSharingButtonStates();
+            
+            if (sharingStatusLabel != null) {
+                sharingStatusLabel.setText("Sharing screen...");
+            }
+            
+            // Notify other participants
+            sendScreenSharingStatus(true);
+            
+            System.out.println("Screen sharing started");
+            
+        } catch (Exception e) {
+            //showError("Failed to start screen sharing", e.getMessage());
+        }
+    }
+    
+    /**
+     * Handle stop screen sharing button click.
+     */
+    @FXML
+    private void handleStopScreenSharing() {
+        if (!isScreenSharing) {
+            return;
+        }
+        
+        screenCaptureService.stopCapturing();
+        isScreenSharing = false;
+        updateScreenSharingButtonStates();
+        
+        if (sharingStatusLabel != null) {
+            sharingStatusLabel.setText("Screen sharing stopped");
+        }
+        
+        // Notify other participants
+        sendScreenSharingStatus(false);
+        
+        System.out.println("Screen sharing stopped");
+    }
+    
+    /**
+     * Handle select screen area button click.
+     */
+    @FXML
+    private void handleSelectScreenArea() {
+        // For now, reset to full screen
+        // In a full implementation, you would show a screen selection dialog
+        screenCaptureService.resetCaptureAreaToFullScreen();
+        //showInfo("Screen Area", "Screen area reset to full screen. Custom area selection coming soon!");
+    }
+    
+    /**
+     * Send screenshot data to other participants.
+     */
+    private void sendScreenshot(String base64Image) {
+        if (!isScreenSharing || currentUserId == null) {
+            return;
+        }
+        
+        String message = String.format("SCREEN_SHARE:%s:%s", currentUserId, base64Image);
+        collaborationService.send(message);
+    }
+    
+    /**
+     * Send screen sharing status to other participants.
+     */
+    private void sendScreenSharingStatus(boolean sharing) {
+        if (currentUserId == null) {
+            return;
+        }
+        
+        String message = String.format("SCREEN_SHARE_STATUS:%s:%s", currentUserId, sharing);
+        collaborationService.send(message);
+    }
+    
+    /**
+     * Handle screenshot data from other participants.
+     */
+    private void handleScreenshotData(String data) {
+        try {
+            String[] parts = data.split(":", 3);
+            if (parts.length >= 3) {
+                String userId = parts[1];
+                String base64Image = parts[2];
+                
+                Image image = ScreenCaptureService.base64ToImage(base64Image);
+                if (image != null) {
+                    displayParticipantScreen(userId, image);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling screenshot data: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Handle screen sharing status from other participants.
+     */
+    private void handleScreenSharingStatus(String data) {
+        try {
+            String[] parts = data.split(":", 3);
+            if (parts.length >= 3) {
+                String userId = parts[1];
+                boolean sharing = Boolean.parseBoolean(parts[2]);
+                
+                if (!sharing) {
+                    removeParticipantScreen(userId);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling screen sharing status: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Display a participant's shared screen.
+     */
+    private void displayParticipantScreen(String userId, Image image) {
+        ImageView imageView = participantScreens.computeIfAbsent(userId, k -> {
+            ImageView newImageView = new ImageView();
+            newImageView.setFitWidth(300);
+            newImageView.setFitHeight(200);
+            newImageView.setPreserveRatio(true);
+            newImageView.setSmooth(true);
+            
+            // Add label for participant name
+            Label nameLabel = new Label(participantNames.getOrDefault(userId, userId));
+            nameLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold;");
+            
+            VBox container = new VBox(5);
+            container.getChildren().addAll(nameLabel, newImageView);
+            
+            // Add to shared screens container
+            if (sharedScreensContainer != null) {
+                sharedScreensContainer.getChildren().add(container);
+            }
+            
+            return newImageView;
+        });
+        
+        imageView.setImage(image);
+    }
+    
+    /**
+     * Remove a participant's shared screen.
+     */
+    private void removeParticipantScreen(String userId) {
+        ImageView imageView = participantScreens.remove(userId);
+        if (imageView != null && sharedScreensContainer != null) {
+            // Find and remove the container (VBox with label and image)
+            sharedScreensContainer.getChildren().removeIf(node -> {
+                if (node instanceof VBox) {
+                    VBox vbox = (VBox) node;
+                    return vbox.getChildren().contains(imageView);
+                }
+                return false;
+            });
+        }
+    }
+    
+    /**
+     * Update button states based on current sharing status.
+     */
+    private void updateScreenSharingButtonStates() {
+        if (startSharingButton != null) {
+            startSharingButton.setDisable(isScreenSharing);
+        }
+        if (stopSharingButton != null) {
+            stopSharingButton.setDisable(!isScreenSharing);
+            stopSharingButton.setVisible(isScreenSharing);
+        }
+        if (selectAreaButton != null) {
+            selectAreaButton.setDisable(isScreenSharing);
+        }
+        if (qualityComboBox != null) {
+            qualityComboBox.setDisable(isScreenSharing);
+        }
+        if (fpsComboBox != null) {
+            fpsComboBox.setDisable(isScreenSharing);
+        }
+    }
+    
+    /**
+     * Get FPS interval in milliseconds from combo box selection.
+     */
+    private int getFpsInterval() {
+        if (fpsComboBox == null) {
+            return 100; // Default to 10 FPS
+        }
+        
+        String fpsText = fpsComboBox.getValue();
+        if (fpsText.contains("5")) return 200;
+        if (fpsText.contains("10")) return 100;
+        if (fpsText.contains("15")) return 67;
+        if (fpsText.contains("30")) return 33;
+        return 100; // Default to 10 FPS
+    }
+    
+    /**
+     * Check if currently sharing screen.
+     */
+    public boolean isScreenSharing() {
+        return isScreenSharing;
+    }
+    
+    /**
+     * Clean up screen sharing resources.
+     */
+    public void cleanupScreenSharing() {
+        if (isScreenSharing) {
+            handleStopScreenSharing();
+        }
+        screenCaptureService.cleanup();
+    }
+    
+    /**
+     * Apply screen size constraints to ensure the whiteboard doesn't exceed screen boundaries.
+     * This method should be called when the whiteboard is initialized or when screen size changes.
+     */
+    public void applyScreenSizeConstraints() {
+        Screen primaryScreen = Screen.getPrimary();
+        Rectangle2D screenBounds = primaryScreen.getVisualBounds();
+        
+        // Get the current stage from the scene
+        if (canvas != null && canvas.getScene() != null && canvas.getScene().getWindow() != null) {
+            javafx.stage.Stage stage = (javafx.stage.Stage) canvas.getScene().getWindow();
+            
+            // Ensure stage doesn't exceed screen bounds
+            double maxWidth = screenBounds.getWidth();
+            double maxHeight = screenBounds.getHeight();
+            
+            if (stage.getWidth() > maxWidth) {
+                stage.setWidth(maxWidth);
+            }
+            if (stage.getHeight() > maxHeight) {
+                stage.setHeight(maxHeight);
+            }
+            
+            // Ensure stage position is within screen bounds
+            double stageX = stage.getX();
+            double stageY = stage.getY();
+            
+            if (stageX < screenBounds.getMinX()) {
+                stage.setX(screenBounds.getMinX());
+            } else if (stageX + stage.getWidth() > screenBounds.getMaxX()) {
+                stage.setX(screenBounds.getMaxX() - stage.getWidth());
+            }
+            
+            if (stageY < screenBounds.getMinY()) {
+                stage.setY(screenBounds.getMinY());
+            } else if (stageY + stage.getHeight() > screenBounds.getMaxY()) {
+                stage.setY(screenBounds.getMaxY() - stage.getHeight());
+            }
+        }
+    }
+    
+    /**
+     * Get the optimal canvas size based on current screen dimensions.
+     * This ensures the canvas doesn't exceed screen boundaries while maintaining usability.
+     */
+    public void optimizeCanvasSize() {
+        Screen primaryScreen = Screen.getPrimary();
+        Rectangle2D screenBounds = primaryScreen.getVisualBounds();
+        
+        // Calculate optimal canvas size (leave some margin for UI elements)
+        double maxCanvasWidth = screenBounds.getWidth() - 100; // Leave margin for sidebars
+        double maxCanvasHeight = screenBounds.getHeight() - 200; // Leave margin for toolbars and status
+        
+        // Ensure minimum canvas size for usability
+        double minCanvasWidth = 400;
+        double minCanvasHeight = 300;
+        
+        if (canvas != null) {
+            // Get the current canvas size
+            double currentWidth = canvas.getWidth();
+            double currentHeight = canvas.getHeight();
+            
+            // Apply constraints
+            if (currentWidth > maxCanvasWidth) {
+                canvas.setWidth(maxCanvasWidth);
+            } else if (currentWidth < minCanvasWidth) {
+                canvas.setWidth(minCanvasWidth);
+            }
+            
+            if (currentHeight > maxCanvasHeight) {
+                canvas.setHeight(maxCanvasHeight);
+            } else if (currentHeight < minCanvasHeight) {
+                canvas.setHeight(minCanvasHeight);
+            }
+        }
+    }
+    
+    /**
+     * Setup a listener to handle screen size changes dynamically.
+     * This ensures the application adapts when the screen resolution changes or when moved between monitors.
+     */
+    private void setupScreenSizeListener() {
+        if (canvas != null && canvas.getScene() != null && canvas.getScene().getWindow() != null) {
+            javafx.stage.Stage stage = (javafx.stage.Stage) canvas.getScene().getWindow();
+            
+            // Listen for stage position and size changes
+            stage.xProperty().addListener((obs, oldVal, newVal) -> {
+                Platform.runLater(this::applyScreenSizeConstraints);
+            });
+            
+            stage.yProperty().addListener((obs, oldVal, newVal) -> {
+                Platform.runLater(this::applyScreenSizeConstraints);
+            });
+            
+            stage.widthProperty().addListener((obs, oldVal, newVal) -> {
+                Platform.runLater(() -> {
+                    applyScreenSizeConstraints();
+                    optimizeCanvasSize();
+                });
+            });
+            
+            stage.heightProperty().addListener((obs, oldVal, newVal) -> {
+                Platform.runLater(() -> {
+                    applyScreenSizeConstraints();
+                    optimizeCanvasSize();
+                });
+            });
         }
     }
 }

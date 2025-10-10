@@ -32,6 +32,33 @@ public class WhiteboardSocketController {
         // The server's job is simple: it receives the data and immediately sends it
         // back out to everyone in the same room. It acts as a message relay or broker.
         // You could add logic here to save the data to a database if you wanted to persist the drawings.
+        
+        // Log screen sharing messages for debugging (but don't log the actual image data)
+        if (data.startsWith("SCREEN_SHARE:")) {
+            System.out.println("Screen sharing data received in room: " + roomCode);
+        } else if (data.startsWith("SCREEN_SHARE_STATUS:")) {
+            System.out.println("Screen sharing status update in room: " + roomCode);
+        }
+        
+        return data;
+    }
+    
+    /**
+     * Handle screen sharing messages specifically.
+     * This method can be used for additional processing of screen sharing data
+     * if needed in the future (e.g., compression, filtering, etc.).
+     */
+    @MessageMapping("/screen/{roomCode}")
+    @SendTo("/topic/screen/{roomCode}")
+    public String handleScreenShare(@DestinationVariable String roomCode, String data) {
+        // For now, just relay the data like the main board handler
+        // In the future, this could include:
+        // - Image compression/decompression
+        // - Quality adjustment based on network conditions
+        // - Screen sharing permissions management
+        // - Bandwidth optimization
+        
+        System.out.println("Screen sharing message processed for room: " + roomCode);
         return data;
     }
 }
