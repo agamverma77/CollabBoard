@@ -2,7 +2,7 @@ package com.example.collabboard.service;
 
 import com.example.collabboard.network.Client;
 import com.example.collabboard.network.Host;
-import com.example.collabboard.network.StompClient; // You will create this class next
+import com.example.collabboard.network.StompClient;
 import javafx.application.Platform;
 import org.springframework.stereotype.Service;
 
@@ -13,49 +13,53 @@ import java.util.function.Consumer;
 @Service
 public class CollaborationService {
 
-    // Enum to track which mode we are in
     private enum CommunicationMode {
-        NONE,
-        LAN,
-        CLOUD
+        NONE, LAN, CLOUD
     }
 
-    // --- State Variables ---
     private CommunicationMode currentMode = CommunicationMode.NONE;
     private Host lanHost;
     private Client lanClient;
     private StompClient cloudClient;
     private Consumer<String> onDataReceived;
     private String currentRoomIdentifier;
+    
+    // NEW: Add the SessionManager dependency
+    private final SessionManager sessionManager;
 
-    // --- Public API for Controllers ---
+    // NEW: Inject SessionManager via constructor
+    public CollaborationService(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
+    }
 
     public boolean isHost() {
         return currentMode == CommunicationMode.LAN && lanHost != null;
     }
 
-    // --- LAN Methods ---
-
     public void startHost(int port) throws IOException {
-        stop(); // Ensure any previous session is closed
+        stop(); 
         currentMode = CommunicationMode.LAN;
         lanHost = new Host(port, this::receiveData);
         new Thread(lanHost).start();
         System.out.println("LAN Host started on port " + port);
     }
 
+    // UPDATED: Now fetches the username and passes it to the Client
     public void connectToHost(String ipAddress, int port, Runnable onSuccess, Consumer<Exception> onFailure) {
         stop();
         currentMode = CommunicationMode.LAN;
-        lanClient = new Client(ipAddress, port, this::receiveData, onSuccess, onFailure);
+        
+        // Grab the username of the person currently logged into this app
+        String username = sessionManager.getCurrentUser().getUsername();
+        
+        // Pass the username to the new Client
+        lanClient = new Client(ipAddress, port, username, this::receiveData, onSuccess, onFailure);
+        
         new Thread(lanClient).start();
         System.out.println("Attempting to connect to LAN host at " + ipAddress + ":" + port);
     }
 
-    // --- Cloud Methods ---
-
     public void createCloudRoom(Consumer<String> onSuccess, Consumer<Exception> onFailure) {
-        // Generate a simple, unique room code
         String roomCode = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         joinCloudRoom(roomCode, () -> onSuccess.accept(roomCode), onFailure);
     }
@@ -63,13 +67,10 @@ public class CollaborationService {
     public void joinCloudRoom(String roomCode, Runnable onSuccess, Consumer<Exception> onFailure) {
         stop();
         currentMode = CommunicationMode.CLOUD;
-        // For local testing, the server is at localhost:8080. When deployed, this URL will change.
         String serverUrl = "wss://collabboard-backend2.onrender.com/ws";
         cloudClient = new StompClient(serverUrl, roomCode, this::receiveData, onSuccess, onFailure);
         cloudClient.connect();
     }
-
-    // --- Common Methods ---
 
     public void send(String data) {
         if (currentMode == CommunicationMode.LAN) {
@@ -104,6 +105,7 @@ public class CollaborationService {
     }
 
     private void receiveData(String data) {
+        System.out.println("[SERVICE RECEIVER] Data has arrived: " + data); 
         if (onDataReceived != null) {
             Platform.runLater(() -> onDataReceived.accept(data));
         }
@@ -121,4 +123,3 @@ public class CollaborationService {
         this.currentRoomIdentifier = identifier;
     }
 }
-

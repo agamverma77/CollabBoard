@@ -1,12 +1,19 @@
 package com.example.collabboard.network;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+/**
+ * Represents the Host (server) in a LAN peer-to-peer session.
+ * This version contains the corrected logic for message broadcasting and forwarding.
+ */
 public class Host implements Runnable {
     private final int port;
     private ServerSocket serverSocket;
@@ -31,6 +38,35 @@ public class Host implements Runnable {
         }
     }
 
+    /**
+     * THIS METHOD IS FIXED.
+     * Sends a message originating from the Host's UI to all connected clients.
+     * It no longer echoes the message back to the host's own UI.
+     */
+    public void broadcast(String message) {
+        System.out.println("[HOST - BROADCASTING]: " + message);
+        clients.keySet().forEach(writer -> writer.println(message));
+    }
+
+    /**
+     * DEFINITIVE FIX 2: This method correctly handles a message received from a client.
+     * It updates the host's own UI and forwards the message to all OTHER clients.
+     */
+    public void forwardMessage(String message, PrintWriter sender) {
+        System.out.println("[HOST - FORWARDING]: " + message);
+        // 1. Update the host's UI with the client's action.
+        onDataReceived.accept(message);
+        
+        // 2. Forward the message to all other connected clients.
+        clients.forEach((writer, username) -> {
+            if (writer != sender) { // Do not send back to the original sender
+                writer.println(message);
+            }
+        });
+    }
+
+    // --- All other methods for session management are correct ---
+
     public void addClient(PrintWriter writer, String username) {
         clients.put(writer, username);
         broadcastUserList();
@@ -38,35 +74,28 @@ public class Host implements Runnable {
 
     private void broadcastUserList() {
         String userList = String.join(",", clients.values());
-        broadcast("USER_LIST:" + userList);
-    }
+        // The host must be included in the user list for everyone to see.
+        String hostUsername = "Host"; // This could be improved to get the host's actual username from SessionManager
+        
+        // Create the full message
+        String fullUserListMessage = "USER_LIST:" + hostUsername + "," + userList;
 
-    public void broadcast(String message) {
-        onDataReceived.accept(message);
-        clients.keySet().forEach(writer -> writer.println(message));
-    }
-
-    public void forwardMessage(String message, PrintWriter sender) {
-        onDataReceived.accept(message);
-        clients.forEach((writer, username) -> {
-            if (writer != sender) {
-                writer.println(message);
-            }
-        });
+        // Update the host's own UI first
+        onDataReceived.accept(fullUserListMessage);
+        
+        // Then, broadcast only to the clients
+        clients.keySet().forEach(writer -> writer.println(fullUserListMessage));
     }
 
     public void kickUser(String usernameToKick) {
-        PrintWriter writerToKick = null;
-        for (Map.Entry<PrintWriter, String> entry : clients.entrySet()) {
-            if (entry.getValue().equals(usernameToKick)) {
-                writerToKick = entry.getKey();
-                break;
-            }
-        }
-        if (writerToKick != null) {
-            writerToKick.println("YOU_WERE_KICKED");
-            removeClient(writerToKick);
-        }
+        clients.entrySet().stream()
+            .filter(entry -> entry.getValue().equals(usernameToKick))
+            .findFirst()
+            .ifPresent(entry -> {
+                PrintWriter writerToKick = entry.getKey();
+                writerToKick.println("YOU_WERE_KICKED");
+                removeClient(writerToKick);
+            });
     }
 
     public void removeClient(PrintWriter writer) {
@@ -76,6 +105,7 @@ public class Host implements Runnable {
 
     public void shutdown() {
         try {
+            clients.clear();
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();
             }
@@ -83,8 +113,6 @@ public class Host implements Runnable {
             e.printStackTrace();
         }
     }
-
-    // (shutdown method is the same)
 
     private static class ClientHandler implements Runnable {
         private final Socket clientSocket;
@@ -106,6 +134,7 @@ public class Host implements Runnable {
                     String username = identifyMessage.substring(9);
                     host.addClient(this.writer, username);
                 } else {
+                    clientSocket.close();
                     return; // Invalid connection
                 }
 
@@ -123,3 +152,4 @@ public class Host implements Runnable {
         }
     }
 }
+

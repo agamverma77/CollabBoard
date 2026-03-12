@@ -21,7 +21,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="900.0" prefWidth="1600.0" style="-fx-background-color: #f5f5f5;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.collabboard.controller.WhiteboardController">
+<BorderPane prefHeight="800.0" prefWidth="1200.0" minHeight="600.0" minWidth="900.0" style="-fx-background-color: #f5f5f5;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.collabboard.controller.WhiteboardController">
 
     <top>
         <BorderPane style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0; -fx-padding: 12;">
@@ -103,75 +103,76 @@
             <center>
                 <StackPane style="-fx-background-color: #f5f5f5;">
                     <children>
-                        <VBox alignment="TOP_CENTER" StackPane.alignment="TOP_CENTER">
+                        <VBox alignment="TOP_CENTER" StackPane.alignment="TOP_CENTER" maxHeight="60">
                             <children>
-                                <HBox alignment="CENTER" spacing="6" style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 8 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
-                                    <!-- ** THIS IS THE FIX ** -->
-                                    <padding><Insets top="12" right="0" bottom="0" left="0"/></padding>
-                                    <children>
-                                        <fx:define><ToggleGroup fx:id="toolGroup"/></fx:define>
-                                        <ToggleButton fx:id="selectTool" text="↖️" onAction="#selectSelectionTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
-                                            <tooltip><Tooltip text="Select Tool" /></tooltip>
-                                        </ToggleButton>
-                                        <ToggleButton fx:id="handTool" text="✋" onAction="#selectHandTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
-                                            <tooltip><Tooltip text="Pan Tool" /></tooltip>
-                                        </ToggleButton>
-                                        <Separator orientation="VERTICAL" prefHeight="25"/>
-                                        <ToggleButton fx:id="lockBoardButton" text="🔒" onAction="#handleLockBoard" visible="false" prefWidth="60" prefHeight="45" style="-fx-font-size: 22;">
-                                            <tooltip><Tooltip text="Lock/Unlock Board (Host Only)" /></tooltip>
-                                        </ToggleButton>
-                                        <Separator orientation="VERTICAL" prefHeight="25"/>
-                                        <ToggleButton fx:id="penTool" text="🖊️" onAction="#selectPenTool" toggleGroup="$toolGroup" selected="true" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
-                                            <tooltip><Tooltip text="Pen Tool" /></tooltip>
-                                        </ToggleButton>
-                                        <ToggleButton fx:id="textTool" text="📝" onAction="#selectTextTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
-                                            <tooltip><Tooltip text="Text Tool" /></tooltip>
-                                        </ToggleButton>
-                                        <ToggleButton fx:id="noteTool" text="🗒️" onAction="#selectStickyNoteTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
-                                            <tooltip><Tooltip text="Sticky Note" /></tooltip>
-                                        </ToggleButton>
-                                        <ToggleButton fx:id="shapeTool" text="⬜" onAction="#selectRectangleTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
-                                            <tooltip><Tooltip text="Shape Tool" /></tooltip>
-                                        </ToggleButton>
-                                        <Separator orientation="VERTICAL" prefHeight="25"/>
-                                        <ColorPicker fx:id="colorPicker" prefWidth="80" prefHeight="45"/>
-                                        <ToggleButton fx:id="eraserTool" text="🧹" onAction="#selectEraserTool" toggleGroup="$toolGroup" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
-                                            <tooltip><Tooltip text="Eraser" /></tooltip>
-                                        </ToggleButton>
-                                        <Separator orientation="VERTICAL" prefHeight="25"/>
-                                        <Button fx:id="clearBtn" text="🗑️" onAction="#handleClearCanvas" style="-fx-padding: 8 12; -fx-font-size: 22;" prefHeight="45">
-                                            <tooltip><Tooltip text="Clear Entire Canvas" /></tooltip>
-                                        </Button>
-                                        <Separator orientation="VERTICAL" prefHeight="25"/>
-                                        <Button fx:id="undoBtn" text="↶" onAction="#handleUndo" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
-                                            <tooltip><Tooltip text="Undo" /></tooltip>
-                                        </Button>
-                                        <Button fx:id="redoBtn" text="↷" onAction="#handleRedo" style="-fx-font-size: 24;" prefWidth="50" prefHeight="45">
-                                            <tooltip><Tooltip text="Redo" /></tooltip>
-                                        </Button>
-                                        <Separator orientation="VERTICAL" prefHeight="25"/>
-                                        <Button fx:id="saveBtn" text="💾" onAction="#handleSaveBoard" style="-fx-padding: 8 12; -fx-font-size: 22;" prefHeight="45">
-                                            <tooltip><Tooltip text="Save Board State" /></tooltip>
-                                        </Button>
-                                        <Button fx:id="loadBtn" text="📁" onAction="#handleLoadBoard" style="-fx-padding: 8 12; -fx-font-size: 22;" prefHeight="45">
-                                            <tooltip><Tooltip text="Load Board State" /></tooltip>
-                                        </Button>
-                                        <Button fx:id="exportBtn" text="⬇️" onAction="#handleExportAsImage" style="-fx-padding: 8 12; -fx-font-size: 22;" prefHeight="45">
-                                            <tooltip><Tooltip text="Export as Image" /></tooltip>
-                                        </Button>
-                                        <Separator orientation="VERTICAL" prefHeight="25"/>
-                                        <HBox alignment="CENTER" spacing="6">
+                                <ScrollPane vbarPolicy="NEVER" hbarPolicy="AS_NEEDED" fitToHeight="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+                                    <content>
+                                        <HBox alignment="CENTER" spacing="6" minWidth="-Infinity" style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 8 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
                                             <children>
-                                                <Label fx:id="zoomLabel" text="100%" style="-fx-font-size: 11;"/>
-                                                <Slider fx:id="zoomSlider" min="10" max="200" value="100" prefWidth="80" prefHeight="35"/>
+                                                <fx:define><ToggleGroup fx:id="toolGroup"/></fx:define>
+                                                <ToggleButton fx:id="selectTool" text="↖️" onAction="#selectSelectionTool" toggleGroup="$toolGroup" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Select Tool" /></tooltip>
+                                                </ToggleButton>
+                                                <ToggleButton fx:id="handTool" text="✋" onAction="#selectHandTool" toggleGroup="$toolGroup" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Pan Tool" /></tooltip>
+                                                </ToggleButton>
+                                                <Separator orientation="VERTICAL" prefHeight="25"/>
+                                                <ToggleButton fx:id="lockBoardButton" text="🔒" onAction="#handleLockBoard" visible="false" minWidth="45" prefHeight="45" style="-fx-font-size: 20;">
+                                                    <tooltip><Tooltip text="Lock/Unlock Board (Host Only)" /></tooltip>
+                                                </ToggleButton>
+                                                <Separator orientation="VERTICAL" prefHeight="25"/>
+                                                <ToggleButton fx:id="penTool" text="🖊️" onAction="#selectPenTool" toggleGroup="$toolGroup" selected="true" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Pen Tool" /></tooltip>
+                                                </ToggleButton>
+                                                <ToggleButton fx:id="textTool" text="📝" onAction="#selectTextTool" toggleGroup="$toolGroup" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Text Tool" /></tooltip>
+                                                </ToggleButton>
+                                                <ToggleButton fx:id="noteTool" text="🗒️" onAction="#selectStickyNoteTool" toggleGroup="$toolGroup" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Sticky Note" /></tooltip>
+                                                </ToggleButton>
+                                                <ToggleButton fx:id="shapeTool" text="⬜" onAction="#selectRectangleTool" toggleGroup="$toolGroup" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Shape Tool" /></tooltip>
+                                                </ToggleButton>
+                                                <Separator orientation="VERTICAL" prefHeight="25"/>
+                                                <ColorPicker fx:id="colorPicker" prefWidth="80" prefHeight="45"/>
+                                                <ToggleButton fx:id="eraserTool" text="🧹" onAction="#selectEraserTool" toggleGroup="$toolGroup" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Eraser" /></tooltip>
+                                                </ToggleButton>
+                                                <Separator orientation="VERTICAL" prefHeight="25"/>
+                                                <Button fx:id="clearBtn" text="🗑️" onAction="#handleClearCanvas" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Clear Entire Canvas" /></tooltip>
+                                                </Button>
+                                                <Separator orientation="VERTICAL" prefHeight="25"/>
+                                                <Button fx:id="undoBtn" text="↶" onAction="#handleUndo" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Undo" /></tooltip>
+                                                </Button>
+                                                <Button fx:id="redoBtn" text="↷" onAction="#handleRedo" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Redo" /></tooltip>
+                                                </Button>
+                                                <Separator orientation="VERTICAL" prefHeight="25"/>
+                                                <Button fx:id="saveBtn" text="💾" onAction="#handleSaveBoard" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Save Board State" /></tooltip>
+                                                </Button>
+                                                <Button fx:id="loadBtn" text="📁" onAction="#handleLoadBoard" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Load Board State" /></tooltip>
+                                                </Button>
+                                                <Button fx:id="exportBtn" text="⬇️" onAction="#handleExportAsImage" style="-fx-font-size: 20;" minWidth="45" prefHeight="45">
+                                                    <tooltip><Tooltip text="Export as Image" /></tooltip>
+                                                </Button>
+                                                <Separator orientation="VERTICAL" prefHeight="25"/>
+                                                <HBox alignment="CENTER" spacing="6">
+                                                    <children>
+                                                        <Label fx:id="zoomLabel" text="100%" style="-fx-font-size: 11;"/>
+                                                        <Slider fx:id="zoomSlider" min="10" max="200" value="100" prefWidth="80" prefHeight="35"/>
+                                                    </children>
+                                                </HBox>
                                             </children>
                                         </HBox>
-                                    </children>
-                                </HBox>
+                                    </content>
+                                </ScrollPane>
                             </children>
                         </VBox>
                         <AnchorPane fx:id="canvasPane" style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 8, 0, 0, 2);">
-                            <!-- ** THIS IS THE FIX ** -->
                             <StackPane.margin><Insets top="80" right="20" bottom="20" left="20"/></StackPane.margin>
                             <children>
                                 <Canvas fx:id="canvas" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
@@ -227,4 +228,3 @@
         </HBox>
     </bottom>
 </BorderPane>
-

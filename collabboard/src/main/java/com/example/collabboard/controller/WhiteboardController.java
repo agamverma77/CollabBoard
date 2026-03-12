@@ -577,43 +577,68 @@ public class WhiteboardController {
     // --- MOUSE AND DATA PROCESSING ---
 
     private void handleMousePressed(MouseEvent event) {
-        startX = event.getX();
-        startY = event.getY();
-        lastX = startX; // Initialize lastX/Y here
-        lastY = startY;
-        if (isBoardLocked && !collaborationService.isHost()) return; // PREVENT ACTION IF LOCKED
-        if (currentTool == Tool.PEN) {
-            graphicsContext.setStroke(colorPicker.getValue());
-            graphicsContext.setLineWidth(2.0);
-            graphicsContext.beginPath();
-            graphicsContext.moveTo(startX, startY);
-            graphicsContext.stroke();
-        } else if (currentTool == Tool.STICKY_NOTE) {
-            createTemporaryTextArea(startX, startY);
+        try {
+            System.out.println("MOUSE PRESSED AT: " + event.getX() + ", " + event.getY() + " | Tool: " + currentTool);
+            startX = event.getX();
+            startY = event.getY();
+            lastX = startX; // Initialize lastX/Y here
+            lastY = startY;
+            if (isBoardLocked && !collaborationService.isHost()) return; // PREVENT ACTION IF LOCKED
+            
+            if (currentTool == Tool.PEN) {
+                graphicsContext.setStroke(colorPicker.getValue());
+                graphicsContext.setLineWidth(2.0);
+                graphicsContext.beginPath();
+                graphicsContext.moveTo(startX, startY);
+                graphicsContext.stroke();
+            } else if (currentTool == Tool.STICKY_NOTE) {
+                createTemporaryTextArea(startX, startY);
+            }
+        } catch (Exception e) {
+            System.err.println("CRASH IN MOUSE PRESSED: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     private void handleMouseDragged(MouseEvent event) {
-        if (currentTool != Tool.PEN && currentTool != Tool.ERASER) return;
-        double x = event.getX();
-        double y = event.getY();
-        String data = null;
-        if (isBoardLocked && !collaborationService.isHost()) return; // PREVENT ACTION IF LOCKED
-        if (currentTool == Tool.PEN) {
-            graphicsContext.lineTo(x, y);
-            graphicsContext.stroke();
-            data = String.format("DRAW:%.2f,%.2f,%.2f,%.2f,%s", lastX, lastY, x, y, colorPicker.getValue().toString());
-
-        } else if (currentTool == Tool.ERASER) {
-            double eraserSize = 15.0;
-            eraseData(String.format("%.2f,%.2f,%.2f", x, y, eraserSize));
-            data = String.format("ERASE:%.2f,%.2f,%.2f", x, y, eraserSize);
+        try {
+            // Let's see if the drag event even fires!
+            System.out.println("MOUSE DRAGGED... Tool: " + currentTool); 
+            
+            if (currentTool != Tool.PEN && currentTool != Tool.ERASER) return;
+            double x = event.getX();
+            double y = event.getY();
+            String data = null;
+            
+            if (isBoardLocked && !collaborationService.isHost()) return; 
+            
+           if (currentTool == Tool.PEN) {
+                // THE FIX: Explicitly start a new path and move to YOUR last local position
+                graphicsContext.beginPath();
+                graphicsContext.moveTo(lastX, lastY);
+                graphicsContext.lineTo(x, y);
+                graphicsContext.stroke();
+                
+                // Using Locale.US to prevent comma crashes (keep this from earlier!)
+                data = String.format(java.util.Locale.US, "DRAW:%.2f,%.2f,%.2f,%.2f,%s", lastX, lastY, x, y, colorPicker.getValue().toString());
+            } else if (currentTool == Tool.ERASER) {
+                double eraserSize = 15.0;
+                eraseData(String.format(java.util.Locale.US, "%.2f,%.2f,%.2f", x, y, eraserSize));
+                data = String.format(java.util.Locale.US, "ERASE:%.2f,%.2f,%.2f", x, y, eraserSize);
+            }
+            
+            if (data != null) {
+                System.out.println("[UI SENDER] Trying to send: " + data); 
+                drawingHistory.push(data);
+                redoHistory.clear();
+                collaborationService.send(data);
+            }
+            lastX = x;
+            lastY = y;
+        } catch (Exception e) {
+            System.err.println("CRASH IN MOUSE DRAGGED: " + e.getMessage());
+            e.printStackTrace();
         }
-        if (data != null) {
-            collaborationService.send(data);
-        }
-        lastX = x;
-        lastY = y;
     }
 
     private void handleMouseReleased(MouseEvent event) {
@@ -627,12 +652,19 @@ public class WhiteboardController {
         double width = Math.abs(startX - endX);
         double height = Math.abs(startY - endY);
         if (isBoardLocked && !collaborationService.isHost()) return; // PREVENT ACTION IF LOCKED
+        
+        // THE FIX: Force standard formatting with Locale.US
         if (currentTool == Tool.RECTANGLE) {
-            data = String.format("RECTANGLE:%.2f,%.2f,%.2f,%.2f,%s", x, y, width, height, color.toString());
+            data = String.format(java.util.Locale.US, "RECTANGLE:%.2f,%.2f,%.2f,%.2f,%s", x, y, width, height, color.toString());
         } else if (currentTool == Tool.OVAL) {
-            data = String.format("OVAL:%.2f,%.2f,%.2f,%.2f,%s", x, y, width, height, color.toString());
+            data = String.format(java.util.Locale.US, "OVAL:%.2f,%.2f,%.2f,%.2f,%s", x, y, width, height, color.toString());
         }
+        
         if (data != null) {
+            // BONUS FIX: Add your own actions to your history
+            drawingHistory.push(data);
+            redoHistory.clear();
+            
             collaborationService.send(data);
         }
     }
@@ -800,7 +832,14 @@ public class WhiteboardController {
         textArea.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER && !event.isShiftDown()) {
                 String text = textArea.getText().replace(":", "").replace(",", "");
-                String data = String.format("STICKY_NOTE:%.2f,%.2f,%s", x, y, text);
+                
+                // THE FIX: Force standard formatting with Locale.US
+                String data = String.format(java.util.Locale.US, "STICKY_NOTE:%.2f,%.2f,%s", x, y, text);
+                
+                // BONUS FIX: Add your own actions to your history so Undo works!
+                drawingHistory.push(data);
+                redoHistory.clear();
+                
                 collaborationService.send(data);
                 canvasPane.getChildren().remove(textArea);
                 event.consume();
