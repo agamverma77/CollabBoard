@@ -67,8 +67,17 @@ public class CollaborationService {
     public void joinCloudRoom(String roomCode, Runnable onSuccess, Consumer<Exception> onFailure) {
         stop();
         currentMode = CommunicationMode.CLOUD;
-        String serverUrl = "wss://collabboard-backend2.onrender.com/ws";
-        cloudClient = new StompClient(serverUrl, roomCode, this::receiveData, onSuccess, onFailure);
+                // Comment out the Render link for a minute
+        String serverUrl = "wss://collabboard-backend2.onrender.com/ws"; 
+
+        // Use the local WS (WebSocket) link. Notice it is 'ws://' not 'wss://' because there is no SSL locally.
+        //String serverUrl = "ws://localhost:8080/ws";
+        
+        // THE FIX: Grab the username
+        String username = sessionManager.getCurrentUser().getUsername();
+        
+        // Pass the username into the updated StompClient constructor
+        cloudClient = new StompClient(serverUrl, roomCode, username, this::receiveData, onSuccess, onFailure);
         cloudClient.connect();
     }
 
