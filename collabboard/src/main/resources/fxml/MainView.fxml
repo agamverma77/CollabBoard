@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane fx:id="mainContainer" xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.collabboard.controller.MainController"
+            stylesheets="@css/styles.css">
+
+    <!-- Left Sidebar -->
+    <left>
+        <VBox spacing="10" prefWidth="250" styleClass="sidebar">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <!-- Logo -->
+            <Label text="CollabBoard" styleClass="logo"/>
+
+            <Separator/>
+
+            <!-- Home Button -->
+            <Button fx:id="homeBtn" text="Home" styleClass="nav-button,nav-button-active" maxWidth="Infinity"/>
+
+            <!-- Collaboration Rooms Button with Badge -->
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Button fx:id="collabBtn" text="Collaboration Rooms" styleClass="nav-button" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                <Label text="5" styleClass="badge,badge-blue"/>
+            </HBox>
+
+            <!-- Whiteboard Button -->
+            <Button fx:id="whiteboardBtn" text="Whiteboard" styleClass="nav-button" maxWidth="Infinity"/>
+
+            <!-- Chat Button with Badge -->
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Button fx:id="chatBtn" text="Chat" styleClass="nav-button" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                <Label text="12" styleClass="badge,badge-green"/>
+            </HBox>
+
+            <!-- Analytics Button -->
+            <Button fx:id="analyticsBtn" text="Analytics" styleClass="nav-button" maxWidth="Infinity"/>
+
+            <!-- Projects Button -->
+            <Button fx:id="projectsBtn" text="Projects" styleClass="nav-button" maxWidth="Infinity"/>
+
+            <!-- Spacer -->
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- Team Section -->
+            <Label text="TEAM" styleClass="section-label"/>
+
+            <!-- Team Member 1 -->
+            <HBox spacing="10" alignment="CENTER_LEFT" styleClass="team-member">
+                <Region styleClass="avatar"/>
+                <Label text="John Doe" HBox.hgrow="ALWAYS"/>
+                <Region styleClass="status-online"/>
+            </HBox>
+
+            <!-- Team Member 2 -->
+            <HBox spacing="10" alignment="CENTER_LEFT" styleClass="team-member">
+                <Region styleClass="avatar"/>
+                <Label text="Mike Wilson" HBox.hgrow="ALWAYS"/>
+                <Region styleClass="status-offline"/>
+            </HBox>
+
+            <!-- Spacer -->
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- Settings Button -->
+            <Button fx:id="settingsBtn" text="Settings" styleClass="nav-button" maxWidth="Infinity"/>
+
+            <!-- Help Button -->
+            <Button fx:id="helpBtn" text="Help and Support" styleClass="nav-button" maxWidth="Infinity"/>
+        </VBox>
+    </left>
+
+    <!-- Main Content Area -->
+    <center>
+        <!-- Dashboard content will be dynamically loaded here -->
+    </center>
+
+</BorderPane>

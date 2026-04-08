@@ -1,0 +1,122 @@
+/* Main Application Styles */
+
+.root {
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    -fx-background-color: #2C3E50;
+}
+
+.sidebar-button {
+    -fx-background-color: #34495E;
+    -fx-text-fill: WHITE;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-padding: 10px 20px;
+}
+
+.sidebar-button:hover {
+    -fx-background-color: #435770;
+}
+
+.sidebar-button:pressed {
+    -fx-background-color: #1A252F;
+}
+
+/* Dashboard Styles */
+.dashboard-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
+}
+
+.dashboard-stat-value {
+    -fx-font-weight: bold;
+    -fx-font-size: 32px;
+}
+
+.dashboard-stat-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #7F8C8D;
+}
+
+.primary-button {
+    -fx-background-color: #3498DB;
+    -fx-text-fill: white;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-padding: 10px 20px;
+}
+
+.primary-button:hover {
+    -fx-background-color: #2980B9;
+}
+
+.success-button {
+    -fx-background-color: #27AE60;
+    -fx-text-fill: white;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-padding: 10px 20px;
+}
+
+.success-button:hover {
+    -fx-background-color: #229954;
+}
+
+/* ListView Styles */
+.list-view {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 5px;
+}
+
+.list-view .list-cell:filled:hover {
+    -fx-background-color: rgba(52, 152, 219, 0.1);
+}
+
+.list-view .list-cell:filled:selected {
+    -fx-background-color: rgba(52, 152, 219, 0.2);
+}
+
+/* Progress Bar Styles */
+.progress-bar > .track {
+    -fx-background-color: #ECF0F1;
+    -fx-background-radius: 10px;
+}
+
+.progress-bar > .bar {
+    -fx-background-color: #3498DB;
+    -fx-background-radius: 10px;
+}
+
+/* Labels */
+.title-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 24px;
+    -fx-text-fill: #2C3E50;
+}
+
+.subtitle-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #7F8C8D;
+}
+
+.section-header {
+    -fx-font-weight: bold;
+    -fx-font-size: 18px;
+    -fx-text-fill: #2C3E50;
+}
