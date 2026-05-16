@@ -115,7 +115,7 @@ WebSocket/STOMP endpoint: **`/ws`** (clients subscribe/publish per room as imple
 
 ## License
 
-Specify your license here (e.g. MIT, Apache-2.0).
+This project is licensed under the [MIT License](LICENSE).
 
 ## Contributing
 
