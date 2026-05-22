@@ -3,6 +3,7 @@ package com.example.collabboard.controller;
 import com.example.collabboard.config.FxmlView;
 import com.example.collabboard.model.User;
 import com.example.collabboard.service.CollaborationService;
+import com.example.collabboard.service.SessionManager;
 import com.example.collabboard.service.StageManager;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -25,6 +26,8 @@ public class DashboardController {
 
     @Autowired
     private CollaborationService collaborationService;
+    @Autowired
+    private SessionManager sessionManager;
 
     // --- State ---
     private User loggedInUser;
@@ -133,6 +136,7 @@ public class DashboardController {
     @FXML
     void handleLogoutButtonAction(ActionEvent event) {
         loggedInUser = null;
+        sessionManager.clearSession();
         collaborationService.stop(); // Stop any active LAN or Cloud connection
         stageManager.switchScene(FxmlView.LOGIN); // Use StageManager to go back to login
     }

@@ -2,6 +2,8 @@ package com.example.collabboard.service;
 
 import com.example.collabboard.JavaFxApplication.StageReadyEvent;
 import com.example.collabboard.config.FxmlView;
+import com.example.collabboard.model.User;
+import com.example.collabboard.util.JwtUtil;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
@@ -11,30 +13,72 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 
 @Component
 public class StageManager implements ApplicationListener<StageReadyEvent> {
 
     private Stage primaryStage;
     private final ApplicationContext applicationContext;
+    private final SessionManager sessionManager;
+    private final UserService userService;
+    private final JwtUtil jwtUtil;
 
-    public StageManager(ApplicationContext applicationContext) {
+    public StageManager(
+        ApplicationContext applicationContext,
+        SessionManager sessionManager,
+        UserService userService,
+        JwtUtil jwtUtil
+    ) {
         this.applicationContext = applicationContext;
+        this.sessionManager = sessionManager;
+        this.userService = userService;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
-    public void onApplicationEvent(StageReadyEvent event) {
+    public void onApplicationEvent(@NonNull StageReadyEvent event) {
         this.primaryStage = event.getStage();
         primaryStage.setTitle("CollabBoard");
         
         // Configure stage to respect screen boundaries
         configureStageForScreen();
         
-        switchScene(FxmlView.LOGIN); 
+        if (!tryRestoreAuthenticatedSession()) {
+            switchScene(FxmlView.LOGIN);
+        } else {
+            switchScene(FxmlView.DASHBOARD);
+        }
+    }
+
+    private boolean tryRestoreAuthenticatedSession() {
+        String token = sessionManager.getJwtToken();
+        if (token == null || token.isBlank() || !jwtUtil.validateToken(token)) {
+            sessionManager.clearSession();
+            return false;
+        }
+
+        String username;
+        try {
+            username = jwtUtil.extractUsername(token);
+        } catch (Exception ex) {
+            sessionManager.clearSession();
+            return false;
+        }
+
+        Optional<User> user = userService.findByUsername(username);
+        if (user.isEmpty()) {
+            sessionManager.clearSession();
+            return false;
+        }
+
+        sessionManager.setCurrentUser(user.get());
+        return true;
     }
 
     /**

@@ -73,11 +73,13 @@ public class CollaborationService {
         // Use the local WS (WebSocket) link. Notice it is 'ws://' not 'wss://' because there is no SSL locally.
         //String serverUrl = "ws://localhost:8080/ws";
         
-        // THE FIX: Grab the username
-        String username = sessionManager.getCurrentUser().getUsername();
-        
-        // Pass the username into the updated StompClient constructor
-        cloudClient = new StompClient(serverUrl, roomCode, username, this::receiveData, onSuccess, onFailure);
+        String jwtToken = sessionManager.getJwtToken();
+        if (jwtToken == null || jwtToken.isBlank()) {
+            onFailure.accept(new IllegalStateException("Authentication token is missing. Please log in again."));
+            return;
+        }
+
+        cloudClient = new StompClient(serverUrl, roomCode, jwtToken, this::receiveData, onSuccess, onFailure);
         cloudClient.connect();
     }
 

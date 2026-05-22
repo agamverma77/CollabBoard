@@ -1,6 +1,9 @@
 package com.example.collabboard.controller;
 
+import com.example.collabboard.dto.AuthRequest;
+import com.example.collabboard.dto.AuthResponse;
 import com.example.collabboard.model.User;
+import com.example.collabboard.service.AuthService;
 import com.example.collabboard.service.SessionManager;
 import com.example.collabboard.service.UserService;
 import com.example.collabboard.util.SceneManager;
@@ -26,6 +29,7 @@ import java.util.Random;
 public class LoginController {
 
     private final UserService userService;
+    private final AuthService authService;
     private final SessionManager sessionManager;
     private final ApplicationContext applicationContext;
 
@@ -36,8 +40,9 @@ public class LoginController {
     @FXML private Pane animationPane;
 
 
-    public LoginController(UserService userService, SessionManager sessionManager, ApplicationContext applicationContext) {
+    public LoginController(UserService userService, AuthService authService, SessionManager sessionManager, ApplicationContext applicationContext) {
         this.userService = userService;
+        this.authService = authService;
         this.sessionManager = sessionManager;
         this.applicationContext = applicationContext;
     }
@@ -52,16 +57,22 @@ public class LoginController {
         String username = usernameField.getText();
         String password = passwordField.getText();
 
-        Optional<User> userOptional = userService.loginUser(username, password);
+        try {
+            AuthRequest request = new AuthRequest();
+            request.setUsername(username);
+            request.setPassword(password);
 
-        if (userOptional.isPresent()) {
-           
+            AuthResponse response = authService.login(request);
+            Optional<User> userOptional = userService.findByUsername(response.getUsername());
+            if (userOptional.isEmpty()) {
+                errorLabel.setText("Could not load user profile after login.");
+                return;
+            }
             sessionManager.setCurrentUser(userOptional.get());
-
-           
+            sessionManager.setJwtToken(response.getToken());
             SceneManager.switchScene(event, "DashboardView.fxml", "CollabBoard - Dashboard", applicationContext);
-        } else {
-            errorLabel.setText("Invalid username or password.");
+        } catch (Exception e) {
+            errorLabel.setText(e.getMessage());
         }
     }
 

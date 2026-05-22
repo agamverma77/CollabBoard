@@ -5,32 +5,35 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import java.lang.reflect.Type;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class StompClient {
 
     private final String serverUrl;
     private final String roomCode;
-    private final String username; // NEW: Store the username
+    private final String jwtToken;
     private final Consumer<String> onDataReceived;
     private final Runnable onSuccess;
     private final Consumer<Exception> onFailure;
 
     private StompSession stompSession;
 
-    // UPDATED: Constructor now requires username
-    public StompClient(String serverUrl, String roomCode, String username, Consumer<String> onDataReceived, Runnable onSuccess, Consumer<Exception> onFailure) {
-        this.serverUrl = serverUrl;
-        this.roomCode = roomCode;
-        this.username = username;
-        this.onDataReceived = onDataReceived;
-        this.onSuccess = onSuccess;
-        this.onFailure = onFailure;
+    public StompClient(String serverUrl, String roomCode, String jwtToken, Consumer<String> onDataReceived, Runnable onSuccess, Consumer<Exception> onFailure) {
+        this.serverUrl = Objects.requireNonNull(serverUrl, "serverUrl");
+        this.roomCode = Objects.requireNonNull(roomCode, "roomCode");
+        this.jwtToken = Objects.requireNonNull(jwtToken, "jwtToken");
+        this.onDataReceived = Objects.requireNonNull(onDataReceived, "onDataReceived");
+        this.onSuccess = Objects.requireNonNull(onSuccess, "onSuccess");
+        this.onFailure = Objects.requireNonNull(onFailure, "onFailure");
     }
 
     public void connect() {
@@ -39,30 +42,33 @@ public class StompClient {
             WebSocketStompClient stompClient = new WebSocketStompClient(client);
             stompClient.setMessageConverter(new StringMessageConverter());
 
-            stompClient.connectAsync(serverUrl, new StompSessionHandlerAdapter() {
+            WebSocketHttpHeaders webSocketHeaders = new WebSocketHttpHeaders();
+            StompHeaders connectHeaders = new StompHeaders();
+            connectHeaders.add("Authorization", "Bearer " + jwtToken);
+            String targetUrl = Objects.requireNonNull(serverUrl, "serverUrl");
+
+            stompClient.connectAsync(targetUrl, webSocketHeaders, connectHeaders, new StompSessionHandlerAdapter() {
                 @Override
-                public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+                public void afterConnected(@NonNull StompSession session, @NonNull StompHeaders connectedHeaders) {
                     System.out.println("STOMP client connected to " + serverUrl);
                     stompSession = session;
 
                     // Subscribe to the room
                     session.subscribe("/topic/board/" + roomCode, this);
                     System.out.println("Subscribed to /topic/board/" + roomCode);
-
-                    // THE FIX: Send the IDENTIFY handshake immediately to the cloud server
-                    session.send("/app/board/" + roomCode, "IDENTIFY:" + username);
+                    session.send("/app/board/" + roomCode, "JOIN_ROOM");
 
                     onSuccess.run();
                 }
 
                 // THE FIX: Explicitly tell Spring to convert the incoming bytes into a String
                 @Override
-                public Type getPayloadType(StompHeaders headers) {
+                public @NonNull Type getPayloadType(@NonNull StompHeaders headers) {
                     return String.class;
                 }
 
                 @Override
-                public void handleFrame(StompHeaders headers, Object payload) {
+                public void handleFrame(@NonNull StompHeaders headers, @Nullable Object payload) {
                     // Because we added getPayloadType(), this payload is now safely a String
                     if (payload instanceof String) {
                         onDataReceived.accept((String) payload);
@@ -70,14 +76,14 @@ public class StompClient {
                 }
 
                 @Override
-                public void handleException(StompSession session, StompCommand command, StompHeaders headers, byte[] payload, Throwable exception) {
+                public void handleException(@NonNull StompSession session, @Nullable StompCommand command, @NonNull StompHeaders headers, @NonNull byte[] payload, @NonNull Throwable exception) {
                     System.err.println("STOMP client error: " + exception.getMessage());
                     exception.printStackTrace();
                     onFailure.accept(new Exception("Error during STOMP communication", exception));
                 }
 
                 @Override
-                public void handleTransportError(StompSession session, Throwable exception) {
+                public void handleTransportError(@NonNull StompSession session, @NonNull Throwable exception) {
                     System.err.println("STOMP transport error: " + exception.getMessage());
                     onFailure.accept(new Exception("Connection to server failed", exception));
                 }
@@ -90,7 +96,7 @@ public class StompClient {
 
     public void sendMessage(String data) {
         if (stompSession != null && stompSession.isConnected()) {
-            stompSession.send("/app/board/" + roomCode, data);
+            stompSession.send("/app/board/" + roomCode, Objects.requireNonNull(data, "data"));
         }
     }
 

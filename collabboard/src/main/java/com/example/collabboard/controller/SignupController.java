@@ -1,5 +1,10 @@
 package com.example.collabboard.controller;
 
+import com.example.collabboard.dto.AuthResponse;
+import com.example.collabboard.dto.SignupRequest;
+import com.example.collabboard.model.User;
+import com.example.collabboard.service.AuthService;
+import com.example.collabboard.service.SessionManager;
 import com.example.collabboard.service.UserService;
 import com.example.collabboard.util.SceneManager;
 import javafx.animation.FadeTransition;
@@ -17,6 +22,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Random;
 import javafx.util.Duration;
 
@@ -24,10 +30,14 @@ import javafx.util.Duration;
 public class SignupController {
 
     private final UserService userService;
+    private final AuthService authService;
+    private final SessionManager sessionManager;
     private final ApplicationContext applicationContext;
 
-    public SignupController(UserService userService, ApplicationContext applicationContext) {
+    public SignupController(UserService userService, AuthService authService, SessionManager sessionManager, ApplicationContext applicationContext) {
         this.userService = userService;
+        this.authService = authService;
+        this.sessionManager = sessionManager;
         this.applicationContext = applicationContext;
     }
 
@@ -109,14 +119,24 @@ public class SignupController {
         }
 
         try {
-            
-            userService.registerUser(username, email, password);
+            SignupRequest request = new SignupRequest();
+            request.setUsername(username);
+            request.setEmail(email);
+            request.setPassword(password);
+            AuthResponse response = authService.signup(request);
 
-            
+            Optional<User> createdUser = userService.findByUsername(response.getUsername());
+            if (createdUser.isEmpty()) {
+                messageLabel.setStyle("-fx-text-fill: red;");
+                messageLabel.setText("Account created but profile could not be loaded.");
+                return;
+            }
+            sessionManager.setCurrentUser(createdUser.get());
+            sessionManager.setJwtToken(response.getToken());
             SceneManager.switchScene(
                 event,
-                "LoginView.fxml",
-                "CollabBoard Login",
+                "DashboardView.fxml",
+                "CollabBoard - Dashboard",
                 applicationContext
             );
 

@@ -38,18 +38,21 @@ public class WhiteboardSocketController {
     @MessageMapping("/board/{roomCode}")
     public void handleAction(@DestinationVariable String roomCode, @Payload String data, SimpMessageHeaderAccessor headerAccessor) {
         String sessionId = headerAccessor.getSessionId();
+        String username = headerAccessor.getUser() != null ? headerAccessor.getUser().getName() : null;
 
-        if (data.startsWith("IDENTIFY:")) {
-            // A user is joining the room and announcing who they are.
-            String username = data.substring(9);
+        if (data.startsWith("JOIN_ROOM")) {
+            if (username == null || username.isBlank()) {
+                return;
+            }
             sessionUsernames.put(sessionId, username);
             sessionRooms.put(sessionId, roomCode);
             roomParticipants.computeIfAbsent(roomCode, k -> ConcurrentHashMap.newKeySet()).add(username);
             System.out.println("User '" + username + "' joined cloud room '" + roomCode + "'");
             broadcastUserList(roomCode);
         } else {
-            // For all other messages (DRAW, ERASE, CHAT, SCREEN_SHARE, etc.),
-            // simply relay them to everyone subscribed to the room's topic.
+            if (username == null || username.isBlank()) {
+                return;
+            }
             messagingTemplate.convertAndSend("/topic/board/" + roomCode, data);
         }
     }

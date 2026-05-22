@@ -57,6 +57,10 @@ public class UserService {
         return Optional.empty();
     }
 
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
     /**
      * @param email 
      * @throws Exception 
