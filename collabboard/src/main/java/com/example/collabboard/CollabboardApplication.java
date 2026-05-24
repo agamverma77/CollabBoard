@@ -3,7 +3,7 @@ import javafx.application.Application;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * This is now the main entry point for the DESKTOP CLIENT ONLY.
+ * This is now the main entry point for the DESKTOP CLIENT ONLY
  */
 @SpringBootApplication
 public class CollabboardApplication {
