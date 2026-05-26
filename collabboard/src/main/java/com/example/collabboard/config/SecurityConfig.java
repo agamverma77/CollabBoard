@@ -42,6 +42,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/api/ai/**").permitAll() // <-- NEW: to Let the AI through!
                 .anyRequest().authenticated()
             );
 
