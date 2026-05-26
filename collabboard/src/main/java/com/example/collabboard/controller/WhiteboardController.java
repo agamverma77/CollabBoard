@@ -258,7 +258,6 @@ public class WhiteboardController {
         }
     }
     private void fetchAiIdeas(String prompt) {
-        String jwtToken = sessionManager.getJwtToken(); 
         String url = "https://collabboard-backend2.onrender.com/api/ai/brainstorm"; 
         
         String jsonPayload = "{ \"topic\": \"" + prompt + "\" }";
@@ -267,11 +266,11 @@ public class WhiteboardController {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + jwtToken)
+                // AUTHORIZATION HEADER HAS BEEN COMPLETELY REMOVED!
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .build();
 
-       client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+        client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenAccept(response -> {
                     System.out.println("\n--- AI API DEBUG ---");
                     System.out.println("HTTP Status Code: " + response.statusCode());
@@ -292,7 +291,6 @@ public class WhiteboardController {
                             Platform.runLater(() -> aiPromptField.setPromptText("Error reading AI data."));
                         }
                     } else {
-                        // If it's not 200 OK, show the exact error code on the screen
                         Platform.runLater(() -> aiPromptField.setPromptText("Server Error: " + response.statusCode()));
                     }
                 })
