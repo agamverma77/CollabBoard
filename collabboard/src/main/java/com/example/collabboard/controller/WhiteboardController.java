@@ -271,21 +271,35 @@ public class WhiteboardController {
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .build();
 
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(responseBody -> {
-                    try {
-                        ObjectMapper mapper = new ObjectMapper();
-                        List<String> ideas = mapper.readValue(responseBody, new TypeReference<List<String>>(){});
-                        
-                        Platform.runLater(() -> {
-                            spawnStickyNotes(ideas);
-                            aiPromptField.setPromptText("e.g. Marketing ideas for a coffee shop...");
-                        });
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        Platform.runLater(() -> aiPromptField.setPromptText("Error generating ideas. Try again."));
+       client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenAccept(response -> {
+                    System.out.println("\n--- AI API DEBUG ---");
+                    System.out.println("HTTP Status Code: " + response.statusCode());
+                    System.out.println("Raw Response Body: '" + response.body() + "'");
+                    System.out.println("--------------------\n");
+
+                    if (response.statusCode() == 200) {
+                        try {
+                            ObjectMapper mapper = new ObjectMapper();
+                            List<String> ideas = mapper.readValue(response.body(), new TypeReference<List<String>>(){});
+                            
+                            Platform.runLater(() -> {
+                                spawnStickyNotes(ideas);
+                                aiPromptField.setPromptText("e.g. Marketing ideas for a coffee shop...");
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Platform.runLater(() -> aiPromptField.setPromptText("Error reading AI data."));
+                        }
+                    } else {
+                        // If it's not 200 OK, show the exact error code on the screen
+                        Platform.runLater(() -> aiPromptField.setPromptText("Server Error: " + response.statusCode()));
                     }
+                })
+                .exceptionally(ex -> {
+                    ex.printStackTrace();
+                    Platform.runLater(() -> aiPromptField.setPromptText("Failed to connect to server."));
+                    return null;
                 });
     }
     private void spawnStickyNotes(List<String> ideas) {
