@@ -53,6 +53,16 @@ import java.util.List;
 import java.util.Stack;
 import javafx.scene.control.Tooltip;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import javafx.application.Platform;
+import javafx.scene.control.TextField;
+import java.util.List;
+
 
 @Component
 public class WhiteboardController {
@@ -231,6 +241,82 @@ public class WhiteboardController {
             // Add listener for screen size changes
             setupScreenSizeListener();
         });
+    }
+
+    
+    
+    // NEW AI FIELD
+    @FXML private TextField aiPromptField;
+
+    @FXML
+    private void handleAiBrainstorm() {
+        String prompt = aiPromptField.getText();
+        if (prompt != null && !prompt.trim().isEmpty()) {
+            aiPromptField.setPromptText("✨ Thinking...");
+            aiPromptField.clear(); 
+            fetchAiIdeas(prompt);
+        }
+    }
+    private void fetchAiIdeas(String prompt) {
+        String jwtToken = sessionManager.getJwtToken(); 
+        String url = "https://collabboard-backend2.onrender.com/api/ai/brainstorm"; 
+        
+        String jsonPayload = "{ \"topic\": \"" + prompt + "\" }";
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + jwtToken)
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
+
+        client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenAccept(responseBody -> {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        List<String> ideas = mapper.readValue(responseBody, new TypeReference<List<String>>(){});
+                        
+                        Platform.runLater(() -> {
+                            spawnStickyNotes(ideas);
+                            aiPromptField.setPromptText("e.g. Marketing ideas for a coffee shop...");
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Platform.runLater(() -> aiPromptField.setPromptText("Error generating ideas. Try again."));
+                    }
+                });
+    }
+    private void spawnStickyNotes(List<String> ideas) {
+        // Calculate coordinates based on the center of the canvas
+        double currentX = (canvas.getWidth() / 2) - 250; // Center horizontally
+        double currentY = (canvas.getHeight() / 2) - 100; // Center vertically
+        double spacingX = 170.0; // Standard sticky note is 150w, so 170 gives a nice 20px gap
+
+        for (String ideaText : ideas) {
+            // Clean up the text to avoid breaking your CSV format
+            String cleanText = ideaText.replace(":", "").replace(",", "");
+            
+            // Format exactly like your createTemporaryTextArea method
+            String content = String.format(java.util.Locale.US, "%.2f,%.2f,%s", currentX, currentY, cleanText);
+            String data = "STICKY_NOTE:" + content;
+            
+            // Add to your local history and broadcast to the room
+            drawingHistory.push(data);
+            redoHistory.clear();
+            collaborationService.send(data);
+            
+            // Paint it locally immediately
+            drawStickyNote(content);
+            
+            // Shift the next note to the right. Wrap if it goes off screen.
+            currentX += spacingX;
+            if (currentX > canvas.getWidth() - 170) {
+                currentX = 50.0;
+                currentY += 120.0; // Drop down a row
+            }
+        }
     }
 
     // --- FXML ACTION HANDLERS ---

@@ -50,6 +50,17 @@
                     </children>
                 </HBox>
             </left>
+
+            <center>
+                <HBox alignment="CENTER" spacing="8">
+                    <children>
+                        <Label text="✨ AI:" style="-fx-font-weight: bold; -fx-text-fill: #888;"/>
+                        <TextField fx:id="aiPromptField" promptText="e.g. Marketing ideas for a coffee shop..." prefWidth="350" style="-fx-background-radius: 20; -fx-padding: 8 15; -fx-border-radius: 20; -fx-border-color: #ccc;"/>
+                        <Button text="Generate" onAction="#handleAiBrainstorm" styleClass="whiteboard-primary-btn" style="-fx-background-radius: 20;"/>
+                    </children>
+                </HBox>
+            </center>
+
             <right>
                 <HBox alignment="CENTER_RIGHT" spacing="10">
                     <children>
