@@ -22,8 +22,7 @@ public class GeminiService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public List<String> generateStickyNotes(String topic) {
-       String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro:generateContent?key=" + apiKey;
-
+       String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" + apiKey;
         String prompt = "Generate 5 short, distinct brainstorming ideas for: " + topic + ". You must respond ONLY with a valid JSON array of strings. Do not include markdown formatting, code blocks, or conversational text. Example: [\"Idea 1\", \"Idea 2\"]";
 
         try {
