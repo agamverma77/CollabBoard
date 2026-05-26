@@ -304,7 +304,7 @@ public class WhiteboardController {
         // Calculate coordinates based on the center of the canvas
         double currentX = (canvas.getWidth() / 2) - 250; // Center horizontally
         double currentY = (canvas.getHeight() / 2) - 100; // Center vertically
-        double spacingX = 170.0; // Standard sticky note is 150w, so 170 gives a nice 20px gap
+        double spacingX = 220.0; // Standard sticky note is 150w, so 170 gives a nice 20px gap
 
         for (String ideaText : ideas) {
             // Clean up the text to avoid breaking your CSV format
@@ -1011,30 +1011,49 @@ public class WhiteboardController {
     }
 
     private void drawStickyNote(String content) {
-        try {
-            String[] params = content.split(",", 3);
-            double x = Double.parseDouble(params[0]);
-            double y = Double.parseDouble(params[1]);
-            String text = params[2];
-            double width = 150;
-            double height = 100;
-            graphicsContext.setFill(Color.web("#FFFFE0"));
-            graphicsContext.setStroke(Color.DARKGRAY);
-            graphicsContext.setLineWidth(1.0);
-            graphicsContext.fillRect(x, y, width, height);
-            graphicsContext.strokeRect(x, y, width, height);
-            graphicsContext.setFill(Color.BLACK);
-            graphicsContext.setFont(new Font("System", 14));
-            String[] lines = text.split("\n");
-            for(int i = 0; i < lines.length; i++) {
-                if (i < 5) {
-                    graphicsContext.fillText(lines[i], x + 5, y + 20 + (i * 18));
-                }
+    try {
+        String[] params = content.split(",", 3);
+        double x = Double.parseDouble(params[0]);
+        double y = Double.parseDouble(params[1]);
+        String text = params[2];
+        double width = 200;
+        double height = 150;
+        
+        // Draw Note Background
+        graphicsContext.setFill(Color.web("#FFFFE0"));
+        graphicsContext.setStroke(Color.DARKGRAY);
+        graphicsContext.setLineWidth(1.0);
+        graphicsContext.fillRect(x, y, width, height);
+        graphicsContext.strokeRect(x, y, width, height);
+
+        // Draw Wrapped Text
+        graphicsContext.setFill(Color.BLACK);
+        graphicsContext.setFont(new Font("System", 12));
+        
+        // Simple word wrapper
+        double maxWidth = width - 10;
+        String[] words = text.split(" ");
+        String line = "";
+        double currentY = y + 20;
+
+        for (String word : words) {
+            String testLine = line + word + " ";
+            // Measure width using the graphicsContext
+            if (graphicsContext.getFont().getSize() * testLine.length() * 0.6 > maxWidth) {
+                graphicsContext.fillText(line, x + 5, currentY);
+                line = word + " ";
+                currentY += 18; // Move to next line
+            } else {
+                line = testLine;
             }
-        } catch (Exception e) {
-            System.err.println("Error drawing sticky note: " + content);
         }
+        // Draw the last line
+        graphicsContext.fillText(line, x + 5, currentY);
+
+    } catch (Exception e) {
+        System.err.println("Error drawing sticky note: " + content);
     }
+}
     
     // ==================== SCREEN SHARING METHODS ====================
     
